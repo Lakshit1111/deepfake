@@ -1,29 +1,62 @@
-// content.js
+// Function to make the bubble draggable and save its position
 function makeBubbleDraggable(bubble) {
     let isDragging = false;
+    let wasDragged = false;
     let offsetX, offsetY;
 
+    // Load position from local storage if available
+    const savedPosition = JSON.parse(localStorage.getItem('bubblePosition'));
+    if (savedPosition) {
+        bubble.style.left = `${savedPosition.x}px`;
+        bubble.style.top = `${savedPosition.y}px`;
+        bubble.style.bottom = 'auto'; // Ensure proper positioning
+        bubble.style.right = 'auto';
+    }
+
+    // Mouse down event to start dragging
     bubble.addEventListener('mousedown', (e) => {
         isDragging = true;
-        bubble.style.cursor = 'grabbing'; // Change cursor to grabbing
+        wasDragged = false; // Reset the dragged state
+        bubble.style.cursor = 'grabbing';
         offsetX = e.clientX - bubble.getBoundingClientRect().left;
         offsetY = e.clientY - bubble.getBoundingClientRect().top;
     });
 
+    // Mouse move event to handle dragging
     document.addEventListener('mousemove', (e) => {
         if (isDragging) {
+            wasDragged = true; // Set dragged state to true when moving
             const x = e.clientX - offsetX;
             const y = e.clientY - offsetY;
             bubble.style.left = `${x}px`;
             bubble.style.top = `${y}px`;
-            bubble.style.bottom = 'auto'; // Prevents conflicting CSS styles
-            bubble.style.right = 'auto';  // Prevents conflicting CSS styles
+            bubble.style.bottom = 'auto';
+            bubble.style.right = 'auto';
         }
     });
 
+    // Mouse up event to stop dragging and save position
     document.addEventListener('mouseup', () => {
-        isDragging = false;
-        bubble.style.cursor = 'grab'; // Revert cursor to grab
+        if (isDragging) {
+            isDragging = false;
+            bubble.style.cursor = 'grab';
+            if (wasDragged) {
+                // Save the new position in local storage
+                const position = {
+                    x: bubble.getBoundingClientRect().left,
+                    y: bubble.getBoundingClientRect().top
+                };
+                localStorage.setItem('bubblePosition', JSON.stringify(position));
+            }
+        }
+    });
+
+    // Click event only if the bubble was not dragged
+    bubble.addEventListener('click', (e) => {
+        if (!wasDragged) {
+            alert('Click on an image or video to check for deepfakes.');
+            enableMediaSelection(); // Your function to trigger deepfake detection
+        }
     });
 }
 
@@ -43,11 +76,6 @@ function createFloatingBubble() {
 
     bubble.addEventListener('mouseleave', () => {
         bubble.style.transform = 'scale(1)';
-    });
-
-    bubble.addEventListener('click', () => {
-        alert('Click on an image or video to check for deepfakes.');
-        enableMediaSelection();
     });
 
     document.body.appendChild(bubble);
