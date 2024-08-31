@@ -1,10 +1,10 @@
-/* Enhanced styling for the floating action bubble */
+/* Improved styling for the floating action bubble */
 #deepfake-detect-bubble {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    top: 50%; /* Center vertically */
+    right: -25px; /* Half visible on the right side */
     z-index: 1000;
-    background: linear-gradient(135deg, #6dd5ed, #f80505); /* Gradient color */
+    background-color: #ff4757; /* Brighter red for visibility */
     color: white;
     padding: 15px;
     border-radius: 50%;
@@ -14,22 +14,21 @@
     justify-content: center;
     align-items: center;
     font-size: 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    transform: translateY(-50%); /* Center vertically */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, right 0.3s ease; /* Include transition for right property */
     animation: pulse 2s infinite; /* Pulsing animation */
 }
 
 /* Hover effect to make the bubble interactive */
 #deepfake-detect-bubble:hover {
-    transform: scale(1.15); /* Slightly larger on hover */
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); /* Deepen shadow on hover */
-    background: linear-gradient(135deg, #21d4fd, #b721ff); /* Color change on hover */
+    right: 10px; /* Move fully into view on hover */
+    transform: translateY(-50%) scale(1.15); /* Slightly larger on hover */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); /* Deepen shadow on hover */
 }
 
 /* Optional: Media queries to adjust size on smaller screens */
 @media (max-width: 768px) {
     #deepfake-detect-bubble {
-        bottom: 20px;
-        right: 20px;
         padding: 12px;
         font-size: 18px;
     }
@@ -37,8 +36,6 @@
 
 @media (max-width: 480px) {
     #deepfake-detect-bubble {
-        bottom: 15px;
-        right: 15px;
         padding: 10px;
         font-size: 16px;
     }
@@ -46,7 +43,7 @@
 
 /* Pulse animation for attention */
 @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.05); }
+    100% { transform: translateY(-50%) scale(1); }
 }

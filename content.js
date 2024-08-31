@@ -5,20 +5,25 @@ function makeBubbleDraggable(bubble) {
     let offsetX, offsetY;
 
     // Load position from local storage if available
-    const savedPosition = JSON.parse(localStorage.getItem('bubblePosition'));
-    if (savedPosition) {
-        bubble.style.left = `${savedPosition.x}px`;
-        bubble.style.top = `${savedPosition.y}px`;
-        bubble.style.bottom = 'auto'; // Ensure proper positioning
-        bubble.style.right = 'auto';
-    }
+    // const savedPosition = JSON.parse(localStorage.getItem('bubblePosition'));
+    // if (savedPosition) {
+    //     // bubble.style.left = `${savedPosition.x}px`;
+    //     // bubble.style.top = `${savedPosition.y}px`;
+    //     // bubble.style.bottom = 'auto'; // Ensure proper positioning
+    //     // bubble.style.right = 'auto';
+    // } else {
+    //     // Set initial partially visible position if no saved position
+    //     bubble.style.right = '-25px';  // Adjust this value to ensure half visibility
+    //     bubble.style.top = '50%';
+    //     bubble.style.transform = 'translateY(-50%)';
+    // }
 
     // Mouse down event to start dragging
     bubble.addEventListener('mousedown', (e) => {
         isDragging = true;
         wasDragged = false; // Reset the dragged state
         bubble.style.cursor = 'grabbing';
-        offsetX = e.clientX - bubble.getBoundingClientRect().left;
+        // offsetX = e.clientX - bubble.getBoundingClientRect()./left;
         offsetY = e.clientY - bubble.getBoundingClientRect().top;
     });
 
@@ -28,7 +33,7 @@ function makeBubbleDraggable(bubble) {
             wasDragged = true; // Set dragged state to true when moving
             const x = e.clientX - offsetX;
             const y = e.clientY - offsetY;
-            bubble.style.left = `${x}px`;
+            // bubble.style.left = `${x}px`;
             bubble.style.top = `${y}px`;
             bubble.style.bottom = 'auto';
             bubble.style.right = 'auto';
@@ -69,17 +74,14 @@ function createFloatingBubble() {
     bubble.title = 'Click to start selecting media for deepfake detection';
 
     bubble.innerHTML = '<i class="fas fa-search"> D </i>'; 
+
+    bubble.addEventListener('click', () => {
+        alert('Click on an image or video to check for deepfakes.');
+        enableMediaSelection(); // Your function to trigger deepfake detection
+    });
     
-    bubble.addEventListener('mouseenter', () => {
-        bubble.style.transform = 'scale(1.1)';
-    });
-
-    bubble.addEventListener('mouseleave', () => {
-        bubble.style.transform = 'scale(1)';
-    });
-
     document.body.appendChild(bubble);
-    makeBubbleDraggable(bubble);
+    // makeBubbleDraggable(bubble);
 }
 
 // Function to enable selection of media elements
@@ -125,8 +127,9 @@ function detectDeepfake(media) {
         // Send image URL to your backend or local model
         alert(`Checking image for deepfake: ${imageUrl}`);
     } else if (media.tagName.toLowerCase() === 'video') {
+        const videoUrl = media.src;
         // Implement video frame capture and detection logic
-        alert('Checking video for deepfake.');
+        alert(`Checking video for deepfake: ${videoUrl}`);
     }
 }
 
