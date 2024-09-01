@@ -1,42 +1,38 @@
-// Function to make the bubble draggable and save its position
 function makeBubbleDraggable(bubble) {
     let isDragging = false;
     let wasDragged = false;
-    let offsetX, offsetY;
+    let offsetY;
 
     // Load position from local storage if available
-    // const savedPosition = JSON.parse(localStorage.getItem('bubblePosition'));
-    // if (savedPosition) {
-    //     // bubble.style.left = `${savedPosition.x}px`;
-    //     // bubble.style.top = `${savedPosition.y}px`;
-    //     // bubble.style.bottom = 'auto'; // Ensure proper positioning
-    //     // bubble.style.right = 'auto';
-    // } else {
-    //     // Set initial partially visible position if no saved position
-    //     bubble.style.right = '-25px';  // Adjust this value to ensure half visibility
-    //     bubble.style.top = '50%';
-    //     bubble.style.transform = 'translateY(-50%)';
-    // }
+    const savedPosition = JSON.parse(localStorage.getItem('bubblePosition'));
+    if (savedPosition) {
+        bubble.style.top = `${savedPosition.y}px`;
+    }
+
+    // Function to disable text selection
+    function disableTextSelection() {
+        document.body.style.userSelect = 'none';
+    }
+
+    // Function to enable text selection
+    function enableTextSelection() {
+        document.body.style.userSelect = 'all';
+    }
 
     // Mouse down event to start dragging
     bubble.addEventListener('mousedown', (e) => {
         isDragging = true;
         wasDragged = false; // Reset the dragged state
-        bubble.style.cursor = 'grabbing';
-        // offsetX = e.clientX - bubble.getBoundingClientRect()./left;
         offsetY = e.clientY - bubble.getBoundingClientRect().top;
+        disableTextSelection(); // Disable text selection
     });
 
     // Mouse move event to handle dragging
     document.addEventListener('mousemove', (e) => {
         if (isDragging) {
             wasDragged = true; // Set dragged state to true when moving
-            const x = e.clientX - offsetX;
             const y = e.clientY - offsetY;
-            // bubble.style.left = `${x}px`;
             bubble.style.top = `${y}px`;
-            bubble.style.bottom = 'auto';
-            bubble.style.right = 'auto';
         }
     });
 
@@ -44,11 +40,11 @@ function makeBubbleDraggable(bubble) {
     document.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
+            enableTextSelection(); // Enable text selection
             bubble.style.cursor = 'grab';
             if (wasDragged) {
                 // Save the new position in local storage
                 const position = {
-                    x: bubble.getBoundingClientRect().left,
                     y: bubble.getBoundingClientRect().top
                 };
                 localStorage.setItem('bubblePosition', JSON.stringify(position));
@@ -73,15 +69,11 @@ function createFloatingBubble() {
     bubble.setAttribute('role', 'button'); // Accessibility
     bubble.title = 'Click to start selecting media for deepfake detection';
 
-    bubble.innerHTML = '<i class="fas fa-search"> D </i>'; 
+    bubble.innerHTML = '<i class="fas fa-search"> D </i>';
 
-    bubble.addEventListener('click', () => {
-        alert('Click on an image or video to check for deepfakes.');
-        enableMediaSelection(); // Your function to trigger deepfake detection
-    });
+    makeBubbleDraggable(bubble);
     
     document.body.appendChild(bubble);
-    // makeBubbleDraggable(bubble);
 }
 
 // Function to enable selection of media elements
@@ -120,17 +112,95 @@ function cancelMediaSelection() {
     });
 }
 
-// Function to perform deepfake detection (placeholder)
+// Function to perform deepfake detection
 function detectDeepfake(media) {
     if (media.tagName.toLowerCase() === 'img') {
         const imageUrl = media.src;
-        // Send image URL to your backend or local model
+        downloadImageAndSendToModel(imageUrl);
         alert(`Checking image for deepfake: ${imageUrl}`);
     } else if (media.tagName.toLowerCase() === 'video') {
         const videoUrl = media.src;
-        // Implement video frame capture and detection logic
         alert(`Checking video for deepfake: ${videoUrl}`);
+        extractFramesFromVideo(media);
     }
+}
+
+// Function to download the image and send to the model
+function downloadImageAndSendToModel(imageUrl) {
+    fetch(imageUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const formData = new FormData();
+            formData.append('file', blob, 'image.png');
+
+            // Send the image data to your cloud-hosted model for detection
+            sendImageToModel(formData);
+        })
+        .catch(error => console.error('Error downloading image:', error));
+}
+
+// Function to send the downloaded image to your model
+function sendImageToModel(formData) {
+    const apiUrl = 'https://kxngh-sih-deepsecure.hf.space/api/predict'; // Update if needed
+
+    fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Handle the response from the model
+        console.log(data); // For debugging purposes
+        if (data && data.isDeepfake) {
+            alert('Deepfake detected!');
+        } else {
+            alert('No deepfake detected.');
+        }
+    })
+    .catch(error => console.error('Error sending image to model:', error));
+}
+
+// Function to extract frames from a video and send to the model
+function extractFramesFromVideo(video) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas size to video dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Extract frames at regular intervals (e.g., every 2 seconds)
+    const frameInterval = 2; // in seconds
+    const duration = video.duration;
+    
+    video.currentTime = 0; // Start from the beginning
+
+    video.addEventListener('seeked', function captureFrame() {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+            const formData = new FormData();
+            formData.append('file', blob, `frame_${video.currentTime}.jpg`);
+            sendImageToModel(formData);
+        }, 'image/jpeg');
+
+        // Move to the next frame
+        if (video.currentTime + frameInterval <= duration) {
+            video.currentTime += frameInterval;
+        } else {
+            video.removeEventListener('seeked', captureFrame);
+        }
+    });
+
+    // Start processing frames
+    video.currentTime = frameInterval;
 }
 
 // Inject the floating action bubble into the page
